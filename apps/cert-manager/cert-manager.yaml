@@ -16,10 +16,10 @@ spec:
       skipCrds: true
       values: |
         # Enable prometheus metrics
-        prometheus:
-          enabled: true
-          servicemonitor:
-            enabled: true
+        #prometheus:
+        #  enabled: true
+        #  servicemonitor:
+        #    enabled: true
 
         # Resource limits
         resources:
