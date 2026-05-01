@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/Gabriel2k/Gitops-lab.git
     targetRevision: main
-    path: apps/hello-nginx
+    path: platform/hello-nginx
 
   destination:
     server: https://kubernetes.default.svc
