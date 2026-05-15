@@ -1,0 +1,73 @@
+prometheus:
+  prometheusSpec:
+    retention: 7d
+
+    # 💾 Storage (KRITISK)
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn # ændr hvis du bruger noget andet
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+    # ⚙️ Basic resource safety (meget vigtigt i praksis)
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 200m
+      limits:
+        memory: 3Gi
+
+    # ⏱️ lidt mere realistiske scrape defaults
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+alertmanager:
+  enabled: true
+
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          resources:
+            requests:
+              storage: 5Gi
+
+    resources:
+      requests:
+        memory: 200Mi
+        cpu: 100m
+      limits:
+        memory: 500Mi
+
+grafana:
+  enabled: true
+
+  adminPassword: "CHANGE_ME"
+
+  service:
+    type: ClusterIP
+
+  resources:
+    requests:
+      memory: 200Mi
+      cpu: 100m
+    limits:
+      memory: 500Mi
+
+# 🧱 Standard monitoring stack (typisk best practice ON)
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true
+
+# 🧹 reducer støj (valgfrit men normalt i homelabs)
+defaultRules:
+  create: true

@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-k8s-warpcore
+  namespace: default
+spec:
+  secretName: wildcard-k8s-warpcore-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.k8s.warpcore.dk"
+    - "k8s.warpcore.dk"
