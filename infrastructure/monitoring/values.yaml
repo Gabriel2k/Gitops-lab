@@ -48,6 +48,14 @@ grafana:
 
   adminPassword: "CHANGE_ME"
 
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: longhorn
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+
   service:
     type: ClusterIP
 
