@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nextcloud
+  namespace: argo-cd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Gabriel2k/Gitops-lab
+    targetRevision: main
+    path: helm-charts/nextcloud
+
+    helm:
+      releaseName: nextcloud
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nextcloud
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

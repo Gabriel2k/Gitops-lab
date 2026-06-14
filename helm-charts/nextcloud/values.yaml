@@ -1,0 +1,118 @@
+# -----------------------------------------------------------------------------
+# Nextcloud
+# -----------------------------------------------------------------------------
+nextcloud:
+  host: nextcloud.warpcore.dk
+
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-credentials
+    usernameKey: nextcloud-username
+    passwordKey: nextcloud-password
+
+  phpClientHttpsFix:
+    enabled: true
+    protocol: https
+
+  cronjob:
+    enabled: true
+    schedule: "*/5 * * * *"
+
+  configs:
+    custom.config.php: |-
+      <?php
+      $CONFIG = array (
+        'default_phone_region' => 'DK',
+        'enable_previews' => true,
+        'filelocking.enabled' => true,
+        'maintenance_window_start' => 1,
+        'loglevel' => 2,
+      );
+
+# -----------------------------------------------------------------------------
+# Persistence
+# -----------------------------------------------------------------------------
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 50Gi
+
+# -----------------------------------------------------------------------------
+# Service
+# -----------------------------------------------------------------------------
+service:
+  type: ClusterIP
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: false
+
+# -----------------------------------------------------------------------------
+# Deployment
+# -----------------------------------------------------------------------------
+replicaCount: 1
+
+deploymentStrategy:
+  type: Recreate
+
+# -----------------------------------------------------------------------------
+# Resources
+# -----------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# -----------------------------------------------------------------------------
+# MariaDB
+# -----------------------------------------------------------------------------
+mariadb:
+  enabled: true
+
+  architecture: standalone
+
+  auth:
+    database: nextcloud
+    username: nextcloud
+    existingSecret: mariadb-credentials
+
+  primary:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 20Gi
+
+# -----------------------------------------------------------------------------
+# Redis
+# -----------------------------------------------------------------------------
+redis:
+  enabled: true
+
+  auth:
+    enabled: true
+    existingSecret: redis-credentials
+    existingSecretPasswordKey: redis-password
+
+  master:
+    persistence:
+      enabled: false
+
+# -----------------------------------------------------------------------------
+# Probes
+# -----------------------------------------------------------------------------
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+
+# -----------------------------------------------------------------------------
+# Autoscaling
+# -----------------------------------------------------------------------------
+autoscaling:
+  enabled: false
