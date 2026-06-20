@@ -45,7 +45,7 @@ nextcloud:
       <?php
       $CONFIG = array (
         'trusted_domains' => array (
-          0 => 'nextcloud.warpcore.dk',
+          0 => 'nextcloud.k8s.warpcore.dk',
         ),
         'overwrite.cli.url' => 'https://nextcloud.k8s.warpcore.dk',
         'loglevel' => 2,
