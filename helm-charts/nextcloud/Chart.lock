@@ -1,0 +1,12 @@
+dependencies:
+- name: nextcloud
+  repository: https://nextcloud.github.io/helm/
+  version: 9.1.3
+- name: mariadb
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.1.0
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 19.0.0
+digest: sha256:5746cce02c1d05060080d5ba4c6be83edd0843b688c4c11d43ec3fdf2bf713df
+generated: "2026-06-20T21:04:08.6779961+02:00"
