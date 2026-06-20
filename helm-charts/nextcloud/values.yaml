@@ -11,7 +11,7 @@ image:
 # NEXTCLOUD CORE CONFIG
 # ---------------------------------------------------------------------------
 nextcloud:
-  host: nextcloud.warpcore.dk
+  host: nextcloud.k8s.warpcore.dk
 
   existingSecret:
     enabled: true
@@ -47,7 +47,7 @@ nextcloud:
         'trusted_domains' => array (
           0 => 'nextcloud.warpcore.dk',
         ),
-        'overwrite.cli.url' => 'https://nextcloud.warpcore.dk',
+        'overwrite.cli.url' => 'https://nextcloud.k8s.warpcore.dk',
         'loglevel' => 2,
         'filelocking.enabled' => true,
         'default_phone_region' => 'DK',
