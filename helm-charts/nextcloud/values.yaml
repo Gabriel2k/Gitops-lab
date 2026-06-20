@@ -76,7 +76,7 @@ persistence:
   enabled: true
   storageClass: "longhorn"
   accessMode: ReadWriteOnce
-  size: 50Gi
+  size: 10Gi
 
 # ---------------------------------------------------------------------------
 # INGRESS (Traefik via IngressRoute, så disabled her)
@@ -112,7 +112,7 @@ mariadb:
     persistence:
       enabled: true
       storageClass: "longhorn"
-      size: 20Gi
+      size: 10Gi
     resources:
       requests:
         cpu: 250m
