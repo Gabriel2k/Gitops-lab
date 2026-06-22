@@ -51,7 +51,7 @@ externalDatabase:
   existingSecret:
     enabled: true
     secretName: mariadb-credentials
-    usernameKey: mariadb-user
+    usernameKey: mariadb-username
     passwordKey: mariadb-password
 
 # ---------------------------------------------------------------------------
