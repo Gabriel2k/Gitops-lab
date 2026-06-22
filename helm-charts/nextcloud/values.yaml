@@ -117,24 +117,37 @@ mariadb:
         cpu: 500m
         memory: 512Mi
 # ---------------------------------------------------------------------------
-# PROBES
-# Øget initialDelaySeconds da Nextcloud kan være langsom til at starte,
-# især ved første boot med database-initialisering.
+# PROBES - STABLE NEXTCLOUD CONFIG FOR K8S + ARGOCD
 # ---------------------------------------------------------------------------
-livenessProbe:
-  enabled: true
-  initialDelaySeconds: 300
-  timeoutSeconds: 10
-readinessProbe:
-  enabled: true
-  initialDelaySeconds: 180
-  timeoutSeconds: 10
+
 startupProbe:
   enabled: true
-  initialDelaySeconds: 60
+  httpGet:
+    path: /
+    port: 80
   periodSeconds: 10
   timeoutSeconds: 5
-  failureThreshold: 30
+  failureThreshold: 60 # ~10 min max startup time
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 12
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 600 # først efter 10 min
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 5
 # ---------------------------------------------------------------------------
 # METRICS
 # ---------------------------------------------------------------------------
