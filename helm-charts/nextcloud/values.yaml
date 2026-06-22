@@ -39,15 +39,17 @@ nextcloud:
 ingress:
   enabled: false
 # ---------------------------------------------------------------------------
-# DATABASE (MariaDB subchart)
+# DATABASE
+# internalDatabase disabled = ingen SQLite.
+# externalDatabase peger på MariaDB-instansen fra vores egen Chart.yaml dependency.
 # ---------------------------------------------------------------------------
 internalDatabase:
   enabled: false
 externalDatabase:
-  enabled: false
+  enabled: true
   type: mysql
   # VIGTIGT: Skal matche det faktiske service-navn i din cluster.
-  # Tjek med: kubectl get svc | grep mariadb
+  # Tjek med: kubectl get svc -n nextcloud | grep mariadb
   # Format er typisk: <helm-release-name>-mariadb
   host: nextcloud-mariadb
   database: nextcloud
@@ -57,10 +59,36 @@ externalDatabase:
     usernameKey: mariadb-user
     passwordKey: mariadb-password
 # ---------------------------------------------------------------------------
-# REDIS
+# MARIADB (styres af Chart.yaml dependency — ikke Nextcloud-chartets subchart)
+# enabled: false = Nextcloud-chartet installerer IKKE sin egen MariaDB.
+# Konfigurationen herunder gælder den selvstændige MariaDB fra Chart.yaml.
+# ---------------------------------------------------------------------------
+mariadb:
+  enabled: false
+  architecture: standalone
+  auth:
+    database: nextcloud
+    username: nextcloud
+    existingSecret: mariadb-credentials
+  primary:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+# ---------------------------------------------------------------------------
+# REDIS (styres af Chart.yaml dependency — ikke Nextcloud-chartets subchart)
+# enabled: false = Nextcloud-chartet installerer IKKE sin egen Redis.
+# Konfigurationen herunder gælder den selvstændige Redis fra Chart.yaml.
 # ---------------------------------------------------------------------------
 redis:
-  enabled: true
+  enabled: false
   auth:
     enabled: true
     existingSecret: redis-credentials
@@ -95,59 +123,24 @@ resources:
     cpu: "1"
     memory: 2Gi
 # ---------------------------------------------------------------------------
-# MARIADB
+# PROBES
+# Øget initialDelaySeconds da Nextcloud kan være langsom til at starte,
+# især ved første boot med database-initialisering.
 # ---------------------------------------------------------------------------
-mariadb:
+livenessProbe:
   enabled: true
-  architecture: standalone
-  auth:
-    database: nextcloud
-    username: nextcloud
-    existingSecret: mariadb-credentials
-  primary:
-    persistence:
-      enabled: true
-      storageClass: longhorn
-      size: 10Gi
-    resources:
-      requests:
-        cpu: 250m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-# ---------------------------------------------------------------------------
-# PROBES - STABLE NEXTCLOUD CONFIG FOR K8S + ARGOCD
-# ---------------------------------------------------------------------------
-
-# startupProbe:
-#   enabled: true
-#   httpGet:
-#     path: /
-#     port: 80
-#   periodSeconds: 10
-#   timeoutSeconds: 5
-#   failureThreshold: 60   # ~10 min max startup time
-
-# readinessProbe:
-#   enabled: true
-#   httpGet:
-#     path: /
-#     port: 80
-#   initialDelaySeconds: 180
-#   periodSeconds: 10
-#   timeoutSeconds: 5
-#   failureThreshold: 12
-
-# livenessProbe:
-#   enabled: true
-#   httpGet:
-#     path: /
-#     port: 80
-#   initialDelaySeconds: 600  # først efter 10 min
-#   periodSeconds: 30
-#   timeoutSeconds: 5
-#   failureThreshold: 5
+  initialDelaySeconds: 60
+  timeoutSeconds: 10
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  timeoutSeconds: 10
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
 # ---------------------------------------------------------------------------
 # METRICS
 # ---------------------------------------------------------------------------
