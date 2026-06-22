@@ -120,34 +120,34 @@ mariadb:
 # PROBES - STABLE NEXTCLOUD CONFIG FOR K8S + ARGOCD
 # ---------------------------------------------------------------------------
 
-startupProbe:
-  enabled: true
-  httpGet:
-    path: /
-    port: 80
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 60 # ~10 min max startup time
+# startupProbe:
+#   enabled: true
+#   httpGet:
+#     path: /
+#     port: 80
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 60   # ~10 min max startup time
 
-readinessProbe:
-  enabled: true
-  httpGet:
-    path: /
-    port: 80
-  initialDelaySeconds: 180
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 12
+# readinessProbe:
+#   enabled: true
+#   httpGet:
+#     path: /
+#     port: 80
+#   initialDelaySeconds: 180
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 12
 
-livenessProbe:
-  enabled: true
-  httpGet:
-    path: /
-    port: 80
-  initialDelaySeconds: 600 # først efter 10 min
-  periodSeconds: 30
-  timeoutSeconds: 5
-  failureThreshold: 5
+# livenessProbe:
+#   enabled: true
+#   httpGet:
+#     path: /
+#     port: 80
+#   initialDelaySeconds: 600  # først efter 10 min
+#   periodSeconds: 30
+#   timeoutSeconds: 5
+#   failureThreshold: 5
 # ---------------------------------------------------------------------------
 # METRICS
 # ---------------------------------------------------------------------------
