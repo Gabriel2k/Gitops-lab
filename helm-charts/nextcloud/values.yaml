@@ -24,10 +24,8 @@ nextcloud:
       value: "https"
     - name: TRUSTED_PROXIES
       value: "10.0.0.0/8"
-  securityContext:
-    runAsUser: 33
-    runAsGroup: 33
-    runAsNonRoot: true
+  # securityContext er bevidst fjernet — Nextcloud-images starter som root
+  # og skifter selv til www-data. Tvungen non-root giver permission denied.
   cronjob:
     enabled: true
     type: sidecar
@@ -91,6 +89,9 @@ redis:
       enabled: true
       storageClass: longhorn
       size: 2Gi
+  replica:
+    # Replicas er ikke nødvendigt for et single-node setup
+    replicaCount: 0
 
 # ---------------------------------------------------------------------------
 # STORAGE
