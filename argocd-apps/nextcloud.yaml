@@ -3,29 +3,32 @@ kind: Application
 metadata:
   name: nextcloud
   namespace: argo-cd
-
+  annotations:
+    # Sørger for at prereqs er synced og healthy før Nextcloud deployes
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
+  sources:
+    # Nextcloud Helm chart — styrer versionen via targetRevision
+    - repoURL: https://nextcloud.github.io/helm/
+      chart: nextcloud
+      targetRevision: "9.1.3"
+      helm:
+        releaseName: nextcloud
+        valueFiles:
+          - $values/helm-charts/nextcloud/values.yaml
 
-  source:
-    repoURL: https://github.com/Gabriel2k/Gitops-lab
-    targetRevision: main
-    path: helm-charts/nextcloud
-
-    helm:
-      releaseName: nextcloud
-      valueFiles:
-        - values.yaml
-
+    # Dit GitHub repo — bruges kun til at hente values.yaml
+    - repoURL: https://github.com/Gabriel2k/Gitops-lab
+      targetRevision: new-deployment
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: nextcloud
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-
     syncOptions:
       - CreateNamespace=true
       - ApplyOutOfSyncOnly=true
