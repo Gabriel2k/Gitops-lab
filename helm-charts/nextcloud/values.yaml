@@ -1,18 +1,13 @@
 # ---------------------------------------------------------------------------
-# NEXTCLOUD VALUES (CLEAN + WORKING K8S SETUP)
+# NEXTCLOUD STACK - CLEAN HELM-ALIGNED CONFIG
 # ---------------------------------------------------------------------------
-
 image:
-  repository: nextcloud
-  #tag: "29.0.7-apache"
+  # image.tag sættes IKKE her — den styres af chart-versionen i Chart.yaml.
+  # Opgrader Nextcloud ved at bumpe nextcloud chart-versionen dér i stedet.
   pullPolicy: IfNotPresent
 
-# ---------------------------------------------------------------------------
-# NEXTCLOUD CORE CONFIG
-# ---------------------------------------------------------------------------
 nextcloud:
   host: nextcloud.k8s.warpcore.dk
-
   existingSecret:
     enabled: true
     secretName: nextcloud-credentials
@@ -20,98 +15,99 @@ nextcloud:
     passwordKey: nextcloud-password
     smtpUsernameKey: smtp-username
     smtpPasswordKey: smtp-password
-
+  phpClientHttpsFix:
+    enabled: true
+    protocol: https
   extraEnv:
     - name: OVERWRITEPROTOCOL
       value: "https"
     - name: TRUSTED_PROXIES
       value: "10.0.0.0/8"
-
-    # 🔥 FORCE MariaDB usage (fixer SQLite fallback)
-    - name: MYSQL_HOST
-      value: nextcloud-mariadb
-    - name: MYSQL_DATABASE
-      value: nextcloud
-    - name: MYSQL_USER
-      value: nextcloud
-    - name: MYSQL_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: mariadb-credentials
-          key: mariadb-password
-
-  configs:
-    custom.config.php: |-
-      <?php
-      $CONFIG = array (
-        'trusted_domains' => array (
-          0 => 'nextcloud.k8s.warpcore.dk',
-        ),
-        'overwrite.cli.url' => 'https://nextcloud.k8s.warpcore.dk',
-        'loglevel' => 2,
-        'filelocking.enabled' => true,
-        'default_phone_region' => 'DK',
-      );
-
+  # Security context — kør som www-data (uid 33) i stedet for root
+  securityContext:
+    runAsUser: 33
+    runAsGroup: 33
+    runAsNonRoot: true
   cronjob:
     enabled: true
-    schedule: "*/5 * * * *"
-
-  phpClientHttpsFix:
-    enabled: true
-    protocol: https
-
-# ---------------------------------------------------------------------------
-# SECURITY
-# ---------------------------------------------------------------------------
-securityContext:
-  runAsUser: 33
-  runAsGroup: 33
-  runAsNonRoot: true
-
-# ---------------------------------------------------------------------------
-# STORAGE
-# ---------------------------------------------------------------------------
-persistence:
-  enabled: true
-  storageClass: "longhorn"
-  accessMode: ReadWriteOnce
-  size: 10Gi
-
+    # type: sidecar (default) ignorerer schedule — crond kører internt hvert 5 min.
+    # Skift til 'cronjob' hvis du vil bruge Kubernetes native CronJob med schedule-kontrol.
+    type: sidecar
 # ---------------------------------------------------------------------------
 # INGRESS (Traefik via IngressRoute, så disabled her)
 # ---------------------------------------------------------------------------
 ingress:
   enabled: false
-
+# ---------------------------------------------------------------------------
+# DATABASE (MariaDB subchart)
+# ---------------------------------------------------------------------------
+internalDatabase:
+  enabled: false
+externalDatabase:
+  enabled: true
+  type: mysql
+  # VIGTIGT: Skal matche det faktiske service-navn i din cluster.
+  # Tjek med: kubectl get svc | grep mariadb
+  # Format er typisk: <helm-release-name>-mariadb
+  host: nextcloud-mariadb
+  database: nextcloud
+  existingSecret:
+    enabled: true
+    secretName: mariadb-credentials
+    usernameKey: mariadb-user
+    passwordKey: mariadb-password
+# ---------------------------------------------------------------------------
+# REDIS
+# ---------------------------------------------------------------------------
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: redis-credentials
+    existingSecretPasswordKey: redis-password
+  master:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 2Gi
+# ---------------------------------------------------------------------------
+# STORAGE
+# ---------------------------------------------------------------------------
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 10Gi
+# ---------------------------------------------------------------------------
+# DEPLOYMENT
+# ---------------------------------------------------------------------------
+replicaCount: 1
+deploymentStrategy:
+  type: Recreate
 # ---------------------------------------------------------------------------
 # RESOURCES
 # ---------------------------------------------------------------------------
 resources:
   requests:
     cpu: 250m
-    memory: 512Mi
+    memory: 1Gi
   limits:
     cpu: "1"
-    memory: 1Gi
-
+    memory: 2Gi
 # ---------------------------------------------------------------------------
-# MARIADB (SUBCHART)
+# MARIADB
 # ---------------------------------------------------------------------------
 mariadb:
   enabled: true
-
   architecture: standalone
-
   auth:
     database: nextcloud
     username: nextcloud
     existingSecret: mariadb-credentials
-
   primary:
     persistence:
       enabled: true
-      storageClass: "longhorn"
+      storageClass: longhorn
       size: 10Gi
     resources:
       requests:
@@ -120,43 +116,25 @@ mariadb:
       limits:
         cpu: 500m
         memory: 512Mi
-
-# ---------------------------------------------------------------------------
-# REDIS (file locking + caching)
-# ---------------------------------------------------------------------------
-redis:
-  enabled: true
-
-  auth:
-    enabled: true
-    existingSecret: redis-credentials
-    existingSecretPasswordKey: redis-password
-
-  master:
-    persistence:
-      enabled: false
-
-# ---------------------------------------------------------------------------
-# REPLICA (Nextcloud skal være 1 pod med RWO storage)
-# ---------------------------------------------------------------------------
-replicaCount: 1
-
-deploymentStrategy:
-  type: Recreate
-
 # ---------------------------------------------------------------------------
 # PROBES
+# Øget initialDelaySeconds da Nextcloud kan være langsom til at starte,
+# især ved første boot med database-initialisering.
 # ---------------------------------------------------------------------------
 livenessProbe:
   enabled: true
   initialDelaySeconds: 60
   timeoutSeconds: 10
-
 readinessProbe:
   enabled: true
   initialDelaySeconds: 30
   timeoutSeconds: 10
-
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
 # ---------------------------------------------------------------------------
 # METRICS
 # ---------------------------------------------------------------------------
